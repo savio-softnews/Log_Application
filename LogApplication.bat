@@ -15,7 +15,7 @@ set "pastaLogs=%diretorioAtual%Logs"
 
 echo.
 echo ===================================================================
-echo                 Aplicador de Log - Versão 1.0
+echo                 Aplicador de Log - Versão 1.1
 echo   Sávio Morais: github.com/savio-softnews/Log_Application
 echo ===================================================================
 
@@ -52,6 +52,7 @@ for %%f in ("%pastaM%\*.dom") do (
     call :log_time "Inicio descompactação backup Modificação"
     "%seteZipPath%" x "%%f" -o"%pastaM%" -p%senhaM% -y >nul
     call :log_time "Fim descompactação backup Modificação"
+    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total descompactação backup Modificação: " 
     echo. >> tempos.txt
     echo Arquivo %%~nxf extraído na pasta M.
 )
@@ -71,6 +72,7 @@ for %%f in ("%diretorioAtual%*C.dom") do (
     call :log_time "Inicio descompactação backup Completo"
     "%seteZipPath%" x "%%f" -o"%diretorioAtual%" -p%senhaC% -y >nul
     call :log_time "Fim descompactação backup Completo"
+    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total descompactação backup Completo: " 
     echo. >> tempos.txt
     echo Arquivo %%~nxf extraído na pasta raiz.
 )
@@ -88,11 +90,15 @@ echo Iniciando aplicacao de log...
 if exist "%dbengPath%" if exist "%diretorioAtual%contabil.db" (
     "%dbengPath%" contabil.db -ad logs -o LogInformations.txt
     call :log_time "Fim aplicação Log"
+    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total aplicação de Log: " 
     echo Aplicacao de log concluida.
 ) else (
     echo dbeng17.exe ou contabil.db nao encontrados.
 )
 
+echo.
+echo Calculando tempo total do processo...
+call :sum_times
 echo.
 echo Processamento finalizado.
 pause
