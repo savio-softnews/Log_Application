@@ -116,3 +116,37 @@ if /i "%operacao:~0,6%"=="Inicio" (
 
 echo %operacao% %hora%:%minuto% >> tempos.txt
 goto :eof
+
+rem Calcular a difereça entre hora inicial e final
+:calculate_range
+setLocal enabledelayedexpansion
+
+for /f "tokens=1,2 delims=:" %%a in ("%~1") do (
+    set /a "hora_inicial=%%a", "minuto_inicial=%%b"
+)
+for /f "tokens=1,2 delims=:" %%a in ("%~2") do (
+    set /a "hora_final=%%a", "minuto_final=%%b"
+)
+
+rem Converter tempo para minutos, facilitando os calculos
+set /a "total_inicial = hora_inicial * 60 + minuto_inicial"
+set /a "total_final = hora_final * 60 + minuto_final"
+
+rem Tratativa para tempos que passem da meia noite
+if !total_final! lss !total_inicial! set /a "total_final+=24*60"
+
+rem Intervalo dos minutos
+set /a "intervalo_total_minutos = total_final - total_inicial"
+
+rem Caso o intervalo seja menor que 1 min, será setado o tempo minimo de 1 min
+if !intervalo_total_minutos! lss 1 set /a "intervalo_total_minutos=1"
+
+rem Retornando e formantando os minutos para ser exibido em HH:MM
+set /a "intervalo_hora = intervalo_total_minutos/60"
+set /a "intervalo_minuto = intervalo_total_minutos%%60"
+
+if !intervalo_hora! lss 10 set "intervalo_hora=0!intervalo_hora!"
+if !intervalo_minuto! lss 10 set "intervalo_minuto=0!intervalo_minuto!"
+
+echo %~3 !intervalo_hora!h:!intervalo_minuto!min >> tempos.txt
+goto :eof
