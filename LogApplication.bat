@@ -150,3 +150,30 @@ if !intervalo_minuto! lss 10 set "intervalo_minuto=0!intervalo_minuto!"
 
 echo %~3 !intervalo_hora!h:!intervalo_minuto!min >> tempos.txt
 goto :eof
+
+rem Somar e informar o tempo total
+:sum_times
+setlocal enabledelayedexpansion
+set /a total_min=0
+
+for /f "tokens=2,3 delims=:" %%a in ('findstr /r "[0-9][0-9]h:[0-9][0-9]min" tempos.txt') do (
+    for /f "tokens=1 delims=h" %%H in ("%%a") do set "H=%%H"
+    for /f "tokens=1 delims=m" %%M in ("%%b") do set "M=%%M"
+
+    set /a total_minutos+=H*60+M
+)
+
+set /a total_hora = total_minutos/60
+set /a total_min = total_minutos%%60
+
+if %total_hora% lss 10 set "total_hora=0%total_hora%"
+if %total_min% lss 10 set "total_min=0%total_min%"
+
+(
+    echo.
+    echo =====================================
+    echo Tempo total do processo: %total_hora%h:%total_min%min
+    echo =====================================
+) >> tempos.txt
+endlocal
+goto :eof
