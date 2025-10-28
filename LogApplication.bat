@@ -15,7 +15,7 @@ set "pastaLogs=%diretorioAtual%Logs"
 
 echo.
 echo ===================================================================
-echo                 Aplicador de Log - Versão 1.0
+echo                 Aplicador de Log - Versão 1.1
 echo   Sávio Morais: github.com/savio-softnews/Log_Application
 echo ===================================================================
 
@@ -52,6 +52,7 @@ for %%f in ("%pastaM%\*.dom") do (
     call :log_time "Inicio descompactação backup Modificação"
     "%seteZipPath%" x "%%f" -o"%pastaM%" -p%senhaM% -y >nul
     call :log_time "Fim descompactação backup Modificação"
+    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total descompactação backup Modificação: " 
     echo. >> tempos.txt
     echo Arquivo %%~nxf extraído na pasta M.
 )
@@ -71,6 +72,7 @@ for %%f in ("%diretorioAtual%*C.dom") do (
     call :log_time "Inicio descompactação backup Completo"
     "%seteZipPath%" x "%%f" -o"%diretorioAtual%" -p%senhaC% -y >nul
     call :log_time "Fim descompactação backup Completo"
+    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total descompactação backup Completo: " 
     echo. >> tempos.txt
     echo Arquivo %%~nxf extraído na pasta raiz.
 )
@@ -88,23 +90,96 @@ echo Iniciando aplicacao de log...
 if exist "%dbengPath%" if exist "%diretorioAtual%contabil.db" (
     "%dbengPath%" contabil.db -ad logs -o LogInformations.txt
     call :log_time "Fim aplicação Log"
+    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total aplicação de Log: " 
     echo Aplicacao de log concluida.
 ) else (
     echo dbeng17.exe ou contabil.db nao encontrados.
 )
 
-goto :eof
-rem Função para registrar o tempo e a operação no arquivo de log
-:log_time
-set "operation=%~1"
-for /f "tokens=1,2 delims=:" %%a in ('time /t') do (
-    set hour=%%a
-    set minute=%%b
-)
-echo %operation% %hour%:%minute% >> tempos.txt
-goto :eof
-
+echo.
+echo Calculando tempo total do processo...
+call :sum_times
 echo.
 echo Processamento finalizado.
 pause
 exit /b
+goto :eof
+
+rem Função para registrar o tempo e a operação no arquivo de log
+:log_time
+set "operacao=%~1"
+for /f "tokens=1,2 delims=:" %%a in ('time /t') do (
+    set hora=%%a
+    set minuto=%%b
+)
+
+rem Salvar tempo inicial e final em variáveis globais
+if /i "%operacao:~0,6%"=="Inicio" (
+    set "tempo_inicial=!hora!:!minuto!"
+) else if /i "%operacao:~0,3%"=="Fim" (
+    set "tempo_final=!hora!:!minuto!"
+)
+
+echo %operacao% %hora%:%minuto% >> tempos.txt
+goto :eof
+
+rem Calcular a difereça entre hora inicial e final
+:calculate_range
+setLocal enabledelayedexpansion
+
+for /f "tokens=1,2 delims=:" %%a in ("%~1") do (
+    set /a "hora_inicial=%%a", "minuto_inicial=%%b"
+)
+for /f "tokens=1,2 delims=:" %%a in ("%~2") do (
+    set /a "hora_final=%%a", "minuto_final=%%b"
+)
+
+rem Converter tempo para minutos, facilitando os calculos
+set /a "total_inicial = hora_inicial * 60 + minuto_inicial"
+set /a "total_final = hora_final * 60 + minuto_final"
+
+rem Tratativa para tempos que passem da meia noite
+if !total_final! lss !total_inicial! set /a "total_final+=24*60"
+
+rem Intervalo dos minutos
+set /a "intervalo_total_minutos = total_final - total_inicial"
+
+rem Caso o intervalo seja menor que 1 min, será setado o tempo minimo de 1 min
+if !intervalo_total_minutos! lss 1 set /a "intervalo_total_minutos=1"
+
+rem Retornando e formantando os minutos para ser exibido em HH:MM
+set /a "intervalo_hora = intervalo_total_minutos/60"
+set /a "intervalo_minuto = intervalo_total_minutos%%60"
+
+if !intervalo_hora! lss 10 set "intervalo_hora=0!intervalo_hora!"
+if !intervalo_minuto! lss 10 set "intervalo_minuto=0!intervalo_minuto!"
+
+echo %~3 !intervalo_hora!h:!intervalo_minuto!min >> tempos.txt
+goto :eof
+
+rem Somar e informar o tempo total
+:sum_times
+setlocal enabledelayedexpansion
+set /a total_min=0
+
+for /f "tokens=2,3 delims=:" %%a in ('findstr /r "[0-9][0-9]h:[0-9][0-9]min" tempos.txt') do (
+    for /f "tokens=1 delims=h" %%H in ("%%a") do set "H=%%H"
+    for /f "tokens=1 delims=m" %%M in ("%%b") do set "M=%%M"
+
+    set /a total_minutos+=H*60+M
+)
+
+set /a total_hora = total_minutos/60
+set /a total_min = total_minutos%%60
+
+if %total_hora% lss 10 set "total_hora=0%total_hora%"
+if %total_min% lss 10 set "total_min=0%total_min%"
+
+(
+    echo.
+    echo =====================================
+    echo Tempo total do processo: %total_hora%h:%total_min%min
+    echo =====================================
+) >> tempos.txt
+endlocal
+goto :eof
