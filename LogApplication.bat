@@ -93,18 +93,26 @@ if exist "%dbengPath%" if exist "%diretorioAtual%contabil.db" (
     echo dbeng17.exe ou contabil.db nao encontrados.
 )
 
-goto :eof
-rem Função para registrar o tempo e a operação no arquivo de log
-:log_time
-set "operation=%~1"
-for /f "tokens=1,2 delims=:" %%a in ('time /t') do (
-    set hour=%%a
-    set minute=%%b
-)
-echo %operation% %hour%:%minute% >> tempos.txt
-goto :eof
-
 echo.
 echo Processamento finalizado.
 pause
 exit /b
+goto :eof
+
+rem Função para registrar o tempo e a operação no arquivo de log
+:log_time
+set "operacao=%~1"
+for /f "tokens=1,2 delims=:" %%a in ('time /t') do (
+    set hora=%%a
+    set minuto=%%b
+)
+
+rem Salvar tempo inicial e final em variáveis globais
+if /i "%operacao:~0,6%"=="Inicio" (
+    set "tempo_inicial=!hora!:!minuto!"
+) else if /i "%operacao:~0,3%"=="Fim" (
+    set "tempo_final=!hora!:!minuto!"
+)
+
+echo %operacao% %hora%:%minuto% >> tempos.txt
+goto :eof
