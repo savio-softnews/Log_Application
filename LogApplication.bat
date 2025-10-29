@@ -120,7 +120,7 @@ if /i "%operacao:~0,6%"=="Inicio" (
     set "tempo_final=!hora!:!minuto!"
 )
 
-echo %operacao% %hora%:%minuto% >> tempos.txt
+echo %operacao% !hora!:!minuto! >> tempos.txt
 goto :eof
 
 rem Calcular a difereça entre hora inicial e final
@@ -128,10 +128,12 @@ rem Calcular a difereça entre hora inicial e final
 setLocal enabledelayedexpansion
 
 for /f "tokens=1,2 delims=:" %%a in ("%~1") do (
-    set /a "hora_inicial=%%a", "minuto_inicial=%%b"
+    set "hora_inicial=%%a"
+    set "minuto_inicial=%%b"
 )
 for /f "tokens=1,2 delims=:" %%a in ("%~2") do (
-    set /a "hora_final=%%a", "minuto_final=%%b"
+    set "hora_final=%%a"
+    set "minuto_final=%%b"
 )
 
 rem Converter tempo para minutos, facilitando os calculos
@@ -182,4 +184,5 @@ if %total_min% lss 10 set "total_min=0%total_min%"
     echo =====================================
 ) >> tempos.txt
 endlocal
+
 goto :eof
