@@ -1,4 +1,5 @@
 @echo off
+title Aplicador de Log
 setlocal enabledelayedexpansion
 chcp 65001 >nul
 
@@ -19,7 +20,21 @@ echo                 Aplicador de Log - Versão 1.1
 echo   Sávio Morais: github.com/savio-softnews/Log_Application
 echo ===================================================================
 echo.
-call :base_web
+echo Informe se o seu backup é de origem Web (DW/backup em nuvem) ou Local
+echo 1 - Web
+echo 2 - Local
+set /p tipo_base=Informe a sua resposta: 
+
+if /I "!tipo_base!"=="1" (
+	echo.
+	call :base_web
+) else if /I "!tipo_base!"=="2" (
+    echo.
+	call :base_local
+) else (
+	echo Opcao invalida. Execute novamente e informe 1 ou 2.
+)
+
 echo Processamento finalizado.
 pause
 exit /b
