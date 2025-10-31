@@ -24,6 +24,9 @@ echo Processamento finalizado.
 pause
 exit /b
 
+:: ============================================================
+:: Função 'base web', realiza a descompactação e aplicação de log em bases DW ou backup em Nuvem
+:: ============================================================
 :base_web
 set /p resposta=As senhas de descompactacao sao a senha padrao? (S/N): 
 
@@ -108,7 +111,9 @@ call :sum_times
 echo.
 goto :eof
 
-rem Função para registrar o tempo e a operação no arquivo de log
+:: ============================================================
+:: Função 'Log time', que registra o tempo e operação no arquivo de log
+:: ============================================================
 :log_time
 set "operacao=%~1"
 for /f "tokens=1,2 delims=:" %%a in ('time /t') do (
@@ -126,7 +131,9 @@ if /i "%operacao:~0,6%"=="Inicio" (
 echo %operacao% !hora!:!minuto! >> tempos.txt
 goto :eof
 
-rem Calcular a difereça entre hora inicial e final
+:: ============================================================
+:: Função 'Calculate range', calcula a diferença entre hora inicial e final
+:: ============================================================
 :calculate_range
 setLocal enabledelayedexpansion
 
@@ -162,7 +169,9 @@ if !intervalo_minuto! lss 10 set "intervalo_minuto=0!intervalo_minuto!"
 echo %~3 !intervalo_hora!h:!intervalo_minuto!min >> tempos.txt
 goto :eof
 
-rem Somar e informar o tempo total
+:: ============================================================
+:: Função 'Sum times', soma e informa o tempo total do processo
+:: ============================================================
 :sum_times
 setlocal enabledelayedexpansion
 set /a total_min=0
