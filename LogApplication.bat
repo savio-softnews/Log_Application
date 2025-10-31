@@ -18,7 +18,13 @@ echo ===================================================================
 echo                 Aplicador de Log - Versão 1.1
 echo   Sávio Morais: github.com/savio-softnews/Log_Application
 echo ===================================================================
+echo.
+call :base_web
+echo Processamento finalizado.
+pause
+exit /b
 
+:base_web
 set /p resposta=As senhas de descompactacao sao a senha padrao? (S/N): 
 
 if /I "%resposta%"=="S" (
@@ -100,9 +106,6 @@ echo.
 echo Calculando tempo total do processo...
 call :sum_times
 echo.
-echo Processamento finalizado.
-pause
-exit /b
 goto :eof
 
 rem Função para registrar o tempo e a operação no arquivo de log
