@@ -112,6 +112,89 @@ echo.
 goto :eof
 
 :: ============================================================
+:: Função 'base local', realiza a descompactação e aplicação de log em bases DW ou backup em Nuvem
+:: ============================================================
+:base_local
+echo.
+echo Iniciando aplicador de log...
+echo.
+
+if not exist "%pastaM%" mkdir "%pastaM%"
+if not exist "%pastaLogs%" mkdir "%pastaLogs%"
+
+rem ============================================================
+rem  PROCESSAR ARQUIVO M.DOM
+rem ============================================================
+for %%f in ("%diretorioAtual%*M.dom") do (
+    if exist "%%f" move "%%f" "%pastaM%" >nul
+)
+
+for %%f in ("%pastaM%\*.dom") do (
+    echo --------------------------------------------------
+    echo Extraindo %%~nxf ...
+    call :log_time "Inicio descompactação backup Modificação"
+    "%seteZipPath%" x "%%f" -o"%pastaM%" -p%senhaM% -y >nul
+    call :log_time "Fim descompactação backup Modificação"
+    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total descompactação backup Modificação: " 
+    echo. >> tempos.txt
+    echo Arquivo %%~nxf extraído na pasta M.
+
+    rem --- Busca recursiva apenas por .log ---
+    set "log_encontrado=false"
+    call :procurar_arquivo "%pastaM%" "log" "false"
+	
+	call :limpar_pastas "%pastaM%%"
+)
+
+rem Extração arquivo C.dom
+for %%f in ("%diretorioAtual%*C.dom") do (
+    echo --------------------------------------------------
+    echo Extraindo %%~nxf ...
+    call :log_time "Inicio descompactação backup Completo"
+    "%seteZipPath%" x "%%f" -o"%diretorioAtual%" -p%senhaC% -y >nul
+    call :log_time "Fim descompactação backup Completo"
+    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total descompactação backup Completo: "
+    echo. >> tempos.txt
+    echo Arquivo %%~nxf extraído na pasta raiz.
+	
+	rem --- Determinar pasta base da extração (geralmente contém Backup) ---
+    for /d %%D in ("%diretorioAtual%") do (
+		call :debug_log "Diretorio D: %%D"
+        if exist "%%~fD" (
+            set "pastaExtraida=%%~fD"
+			call :debug_log "pasta extraida: !pastaExtraida!"
+            goto :found_folder
+        )
+    )
+	:found_folder
+    rem --- Busca recursiva por .log e .db ---
+    set "log_encontrado=false"
+    set "db_encontrado=false"
+    call :procurar_arquivo "%diretorioAtual%" "log,db" "true"
+	
+	call :limpar_pastas "!pastaExtraida!"
+)
+
+rem Aplicar log com dbeng17.exe
+echo.
+call :log_time "Inicio aplicação Log"
+echo Iniciando aplicacao de log...
+if exist "%dbengPath%" if exist "%diretorioAtual%contabil.db" (
+    "%dbengPath%" contabil.db -ad logs -o LogInformations.txt
+    call :log_time "Fim aplicação Log"
+    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total aplicação de Log: " 
+    echo Aplicacao de log concluida.
+) else (
+    echo dbeng17.exe ou contabil.db nao encontrados.
+)
+
+echo.
+echo Calculando tempo total do processo...
+call :sum_times
+echo.
+goto :eof
+
+:: ============================================================
 :: Função 'Log time', que registra o tempo e operação no arquivo de log
 :: ============================================================
 :log_time
