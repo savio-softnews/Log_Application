@@ -16,7 +16,7 @@ set "pastaLogs=%diretorioAtual%Logs"
 
 echo.
 echo ===================================================================
-echo                 Aplicador de Log - Versão 1.1
+echo                 Aplicador de Log - Versão 2.0
 echo   Sávio Morais: github.com/savio-softnews/Log_Application
 echo ===================================================================
 echo.
