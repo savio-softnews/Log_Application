@@ -196,5 +196,74 @@ if %total_min% lss 10 set "total_min=0%total_min%"
     echo =====================================
 ) >> tempos.txt
 endlocal
+goto :eof
 
+:: ============================================================
+:: Função 'Procurar arquivo', procurar arquivos .log e .db nas subpastas extraidas
+:: ============================================================
+:procurar_arquivo
+setlocal enabledelayedexpansion
+set "pasta=%~1"
+set "tipos=%~2"
+set "modoCompleto=%~3"
+
+for %%A in ("%pasta%\*") do (
+    if exist "%%~A" (
+        for %%T in (!tipos!) do (
+            if /i "%%~xA"==".%%T" (
+                if "%%T"=="log" (
+                    if "!log_encontrado!"=="false" (
+                        echo Encontrado LOG: %%~nxA
+                        if "!modoCompleto!"=="true" (
+                            move /Y "%%~fA" "%pastaLogs%\%%~nxA" >nul
+                        ) else (
+                            set "novoNome=%%~nA1.log"
+                            move /Y "%%~fA" "%pastaLogs%\!novoNome!" >nul
+                        )
+                        if %errorlevel%==0 (
+                            echo %%~nxA movido para Logs.
+                            endlocal & set "log_encontrado=true"
+                        )
+                    )
+                )
+                if "%%T"=="db" (
+                    if "!db_encontrado!"=="false" (
+                        echo Encontrado DB: %%~nxA
+                        move /Y "%%~fA" "%diretorioAtual%\%%~nxA" >nul
+                        if %errorlevel%==0 (
+                            echo %%~nxA movido para pasta raiz.
+                            endlocal & set "db_encontrado=true"
+                        )
+                    )
+                )
+            )
+        )
+    )
+)
+
+rem --- Verificar condição de parada ---
+if "!modoCompleto!"=="true" (
+    if "!log_encontrado!"=="true" if "!db_encontrado!"=="true" exit /b
+) else (
+    if "!log_encontrado!"=="true" exit /b
+)
+
+for /d %%D in ("%pasta%\*") do (
+    call :procurar_arquivo "%%~fD" "%tipos%" "%modoCompleto%"
+)
+exit /b
+
+:: ============================================================
+:: Função 'Limpar pastas', remove subpastas residuais após a extração
+:: ============================================================
+:limpar_pastas
+set "base=%~1"
+for /d %%D in ("%base%\*") do (
+    if exist "%%~fD" (
+		if /I NOT "%%~nxD"=="M" if /I NOT "%%~nxD"=="Logs" (
+			echo Removendo pasta %%~nxD ...
+			rmdir /S /Q "%%~fD"
+		) 
+    )
+)
 goto :eof
