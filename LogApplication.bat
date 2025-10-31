@@ -92,23 +92,7 @@ for %%f in ("%diretorioAtual%*.log") do (
     echo %%~nxf movido para Logs.
 )
 
-rem Aplicar log com dbeng17.exe
-echo.
-call :log_time "Inicio aplicação Log"
-echo Iniciando aplicacao de log...
-if exist "%dbengPath%" if exist "%diretorioAtual%contabil.db" (
-    "%dbengPath%" contabil.db -ad logs -o LogInformations.txt
-    call :log_time "Fim aplicação Log"
-    call :calculate_range "!tempo_inicial!" "!tempo_final!" "Tempo total aplicação de Log: " 
-    echo Aplicacao de log concluida.
-) else (
-    echo dbeng17.exe ou contabil.db nao encontrados.
-)
-
-echo.
-echo Calculando tempo total do processo...
-call :sum_times
-echo.
+call :log_application
 goto :eof
 
 :: ============================================================
@@ -122,9 +106,7 @@ echo.
 if not exist "%pastaM%" mkdir "%pastaM%"
 if not exist "%pastaLogs%" mkdir "%pastaLogs%"
 
-rem ============================================================
-rem  PROCESSAR ARQUIVO M.DOM
-rem ============================================================
+rem Extração arquivo M.dom
 for %%f in ("%diretorioAtual%*M.dom") do (
     if exist "%%f" move "%%f" "%pastaM%" >nul
 )
@@ -175,7 +157,13 @@ for %%f in ("%diretorioAtual%*C.dom") do (
 	call :limpar_pastas "!pastaExtraida!"
 )
 
-rem Aplicar log com dbeng17.exe
+call :log_application
+goto :eof
+
+:: ============================================================
+:: Função 'Log Application', realiza aplicação de log e chama função para informar o tempo total do processo
+:: ============================================================
+:log_application
 echo.
 call :log_time "Inicio aplicação Log"
 echo Iniciando aplicacao de log...
