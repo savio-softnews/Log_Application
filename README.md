@@ -1,18 +1,16 @@
-# Aplicador de Log - Automação de Backup do SGD
+# Aplicador de Log - Automação de Backup do SGD (Versão 2.0)
 
-Automação em lote (`.bat`) desenvolvida para simplificar e padronizar o processo de **aplicação de logs em bancos de dados provenientes do SGD**, sejam eles backups do **banco DW** ou backups em **Nuvem**.  
-A ferramenta automatiza a **descompactação**, **restauração** e **aplicação de logs**, além de gerar um **relatório de execução** para análise e controle de tempo.
+Automação em lote (`.bat`) desenvolvida para padronizar e agilizar o processo de **aplicação de logs em backups Domínio**, com suporte tanto para **backups Web (DW/Nuvem)** quanto para **backups Locais**.  
+A versão 2.0 introduz rotinas específicas para cada tipo de backup, oferecendo mais flexibilidade, segurança e clareza na execução.
 
 ---
 
 ## 🧩 Requisitos
 
-Antes de executar o script, certifique-se de que os seguintes componentes estão instalados **nos caminhos padrão**:
+Antes de executar o script, certifique-se de que os seguintes programas estão instalados **nos caminhos padrões**:
 
-- **7-Zip** → `C:\Program Files\7-Zip\7zG.exe`  
-- **SQL Anywhere 17** → `C:\Program Files\SQL Anywhere 17\Bin64\dbeng17.exe`
-
-> ⚠️ O programa atualmente funciona **somente** com backups baixados do **SGD (banco DW ou backup em Nuvem)**.
+- **7-Zip** instalado em: `C:\Program Files\7-Zip\7zG.exe`  
+- **SQL Anywhere 17** instalado em: `C:\Program Files\SQL Anywhere 17\Bin64\dbeng17.exe`
 
 ---
 
@@ -44,73 +42,45 @@ Durante a execução, o script criará automaticamente:
 
 2. Execute o arquivo `.bat` com duplo clique.
 
-3. Quando solicitado:
+3. Quando solicitado, informe o tipo de backup:
    ```
-   As senhas de descompactacao sao a senha padrao? (S/N)
+   Informe se o seu backup é de origem Web (DW/backup em nuvem) ou Local
+   1 - Web
+   2 - Local
    ```
-   - Se **S**, o script usará a senha padrão.
-   - Se **N**, o usuário será solicitado a informar manualmente as senhas corretas para cada backup.
+   - Digite **1** para backups Web (DW/Nuvem)  
+   - Digite **2** para backups Locais  
 
-4. O script descompactará os arquivos, aplicará os logs e, ao final, criará o arquivo **`texto.txt`**, que conterá:
-   - Tempos de execução
-   - Etapas realizadas
-   - Logs de erros ou sucesso
+   3.1. Caso o tipo do backup seja **web**, o script perguntará:
+      ```
+      As senhas de descompactacao sao a senha padrao? (S/N)
+      ```
+      - Se **S**, o script usará a senha padrão. 
+      - Se **N**, o usuário será solicitado a informar manualmente as senhas corretas para cada backup.
 
----
-
-## 🧠 Passo a Passo Técnico Interno
-
-Esta seção descreve tecnicamente o que o script `.bat` realiza em cada etapa.
-
-### 1. Configuração inicial
-- Define o uso de **UTF-8** (`chcp 65001`) para evitar problemas com acentuação.
-- Define caminhos padrão:
-  ```bat
-  set "seteZipPath=C:\Program Files\7-Zip\7zG.exe"
-  set "dbengPath=C:\Program Files\SQL Anywhere 17\Bin64\dbeng17.exe"
-  ```
-- Cria variáveis de diretório (`%~dp0`, `M`, `Logs`) para organizar os arquivos gerados.
-
-### 2. Coleta de senhas
-- O usuário é perguntado se deseja usar a senha padrão.
-- Caso negativo, o script solicita as senhas para:
-  - **Backup de modificação**
-  - **Backup completo**
-
-### 3. Descompactação dos backups
-- Usa o **7-Zip** em modo gráfico (`7zG.exe`) para descompactar os arquivos `.dom`.
-  ```bat
-  "%seteZipPath%" x "Backup_Completo.dom" -p%senhaC% -o"%diretorioAtual%\C" -y
-  "%seteZipPath%" x "Backup_Modificacao.dom" -p%senhaM% -o"%diretorioAtual%\M" -y
-  ```
-- Os conteúdos são extraídos para as pastas `C` e `M`.
-
-### 4. Inicialização do banco e aplicação de logs
-- Executa o **SQL Anywhere 17** (`dbeng17.exe`) apontando para o banco descompactado.
-- Inicia o banco com parâmetros de controle e logs.
-- Executa comandos SQL de atualização e aplica os logs contidos no backup de modificação.
-
-### 5. Geração do relatório de tempos
-- Mede e armazena os tempos de:
-  - Descompactação dos backups  
-  - Aplicação dos logs  
-  - Finalização da operação
-- Cria o arquivo `texto.txt` na pasta principal, contendo:
-  - Tempo total de execução  
-  - Caminhos dos arquivos utilizados  
-  - Resultados e status final
-
-### 6. Limpeza e encerramento
-- Opcionalmente remove arquivos temporários.
-- Exibe mensagem final informando a conclusão da aplicação dos logs.
+4. O script descompactará os arquivos, aplicará os logs e, ao final, será gerado o arquivo **`texto.txt`** contendo:
+   - Tempos de execução  
+   - Status das operações  
+   - Caminhos utilizados  
 
 ---
 
 ## 📄 Saída Gerada
 
 Após a execução, são criados:
-- `texto.txt` → relatório detalhado com tempos e resultados da execução  
-- `M` e `Logs` → pastas contendo arquivos temporários e de log
+- `texto.txt` → relatório detalhado com os tempos e resultados  
+- `Logs` → pasta contendo registros de execução  
+- `M` → pasta com arquivos temporários  
+
+
+---
+
+## 📘 Observações Importantes
+
+- Compatível com **backups Domínio Web(DW/Nuvem) e Local**.  
+- Não altere os nomes ou a estrutura dos arquivos `.dom`.  
+- Evite espaços ou caracteres especiais nos nomes das pastas.  
+- Recomenda-se testar antes em ambiente de homologação.
 
 ---
 
@@ -118,31 +88,65 @@ Após a execução, são criados:
 
 | Problema | Possível Causa | Solução |
 |-----------|----------------|----------|
-| Erro ao descompactar backup | Caminho incorreto do 7-Zip | Verifique se o 7-Zip está instalado em `C:\Program Files\7-Zip\7zG.exe` |
+| Opção inválida ao escolher tipo de base | Valor incorreto informado | Execute novamente e informe `1` ou `2` |
+| Erro ao descompactar backup | Caminho incorreto do 7-Zip | Verifique a instalação em `C:\Program Files\7-Zip\7zG.exe` |
 | Banco não inicializa | Caminho incorreto do SQL Anywhere | Confirme a instalação em `C:\Program Files\SQL Anywhere 17\Bin64\dbeng17.exe` |
-| Script não executa | Falta de permissões | Execute o `.bat` como **Administrador** |
-| Senha incorreta | Backup protegido com senha diferente | Informe a senha correta quando solicitado |
+| Falha ao aplicar logs | Arquivos corrompidos ou senha incorreta | Baixe novamente o backup e confirme as senhas |
+| Permissão negada | Execução sem privilégios | Execute o `.bat` como **Administrador** |
 
 ---
 
-## 📘 Observações Importantes
+## 🧠 Passo a Passo Técnico Interno
 
-- Compatível apenas com **backups do SGD (DW ou Nuvem)**.  
-- Não altere a estrutura dos backups antes da execução.  
-- Evite mover os arquivos durante a execução do script.  
-- Recomenda-se rodar o script em ambiente de teste antes de produção.  
-- Para evitar erros de caminho, mantenha os nomes dos backups curtos e sem espaços.
+A seguir, o funcionamento técnico da versão 2.0 do script.
+
+### 1. Configuração inicial
+- Define título da janela (`title Aplicador de Log`) e uso de UTF-8 (`chcp 65001`).
+- Define os caminhos padrão de dependências:
+  ```bat
+  set "seteZipPath=C:\Program Files\7-Zip\7zG.exe"
+  set "dbengPath=C:\Program Files\SQL Anywhere 17\Bin64\dbeng17.exe"
+  ```
+- Define variáveis de diretório (`%~dp0`, `M`, `Logs`).
+
+### 2. Escolha do tipo de base
+- Pergunta se o backup é **Web (DW/Nuvem)** ou **Local**:
+  ```bat
+  set /p tipo_base=Informe a sua resposta:
+  if /I "!tipo_base!"=="1" (call :base_web)
+  if /I "!tipo_base!"=="2" (call :base_local)
+  ```
+- Essa separação permite executar rotinas distintas dependendo do tipo de backup.
+
+### 3. Rotina `:base_web`
+- Descompacta os backups `.dom` usando **7-Zip** com a senha informada.  
+- Aplica os logs automaticamente no banco SQL Anywhere restaurado.  
+- Gera relatórios em `Logs` e o arquivo final `texto.txt`.
+
+### 4. Rotina `:base_local`
+- Executa os mesmos procedimentos, porém ajustados para backups locais.  
+- Mantém as etapas de descompactação, restauração e aplicação de logs.
+
+### 5. Registro e relatório final
+- Cria o arquivo `texto.txt` com:
+  - Duração de cada etapa (extração, aplicação de logs, finalização)
+  - Status final da operação
+
+### 6. Encerramento
+- Exibe mensagem **"Processamento finalizado"**.
+- Encerra o processo e mantém os logs disponíveis para consulta posterior.  
 
 ---
 
 ## 👨‍💻 Autor
 
 **Sávio Morais**  
-🔗 [github.com/savio-softnews/Log_Application](https://github.com/savio-softnews/Log_Application)
+🔗 [LinkedIn](https://www.linkedin.com/in/savio-santana-de-morais/)   
+🔗 [GitHub](https://github.com/Savio-S-Morais)
 
 ---
 
 ## 🪪 Licença
 
-Este projeto é distribuído sob a **licença MIT**.  
-Sinta-se livre para usar, modificar e redistribuir, mantendo os créditos originais.
+Distribuído sob a **licença MIT**.  
+Permite uso, modificação e redistribuição, mantendo os créditos originais.
